@@ -6,6 +6,12 @@ __pycache__/
 # C extensions
 *.so
 
+# bionic64.box
+*.box
+
+# ./vagrant
+.vagrant
+
 # Distribution / packaging
 .Python
 build/
