@@ -8,6 +8,7 @@ __pycache__/
 
 # bionic64.box
 *.box
+Vagrantfile
 
 # ./vagrant
 .vagrant
@@ -136,3 +137,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.pyre
+/.pycharm_helpers/
