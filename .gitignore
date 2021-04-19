@@ -12,6 +12,9 @@ __pycache__/
 # ./vagrant
 .vagrant
 
+# intellij setting caches
+.idea
+
 # Distribution / packaging
 .Python
 build/
