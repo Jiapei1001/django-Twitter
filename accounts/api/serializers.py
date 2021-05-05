@@ -5,7 +5,7 @@ from rest_framework import serializers, exceptions
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'email']
+        fields = ['id', 'username', 'email']
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -31,7 +31,7 @@ class SignupSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         username = validated_data['username'].lower()
         email = validated_data['email'].lower()
-        password = validated_data['password'].lower()
+        password = validated_data['password']
 
         user = User.objects.create_user(
             username=username,
