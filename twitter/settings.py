@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     # 将之前创建的accounts应用注册到了 Django 中
     'accounts',
     'tweets',
+    'friendships',
 ]
 
 REST_FRAMEWORK = {

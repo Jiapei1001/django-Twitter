@@ -10,9 +10,6 @@ TWEET_CREATE_API = '/api/tweets/'
 class TweetApiTests(TestCase):
 
     def setUp(self):
-        # Anonymous user
-        self.anonymous_client = APIClient()
-
         # Registered user
         self.user1 = self.create_user('user1', 'user1@gmail.com')
         self.tweets1 = [

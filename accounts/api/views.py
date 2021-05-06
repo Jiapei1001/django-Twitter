@@ -88,4 +88,3 @@ class AccountViewSet(viewsets.ViewSet):
         # logout
         django_logout(request)
         return Response({'success': True})
-
