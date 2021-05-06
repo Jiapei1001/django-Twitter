@@ -26,7 +26,8 @@ SECRET_KEY = '-f=i)_bs$1-me!i@&l_lx%4*c1)x5qi68mdxhf2*75&(fr&(f@'
 DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1', '192.168.33.10', 'localhost']
-
+# DEBUG_TOOLBAR: INTERNAL_IPS
+INTERNAL_IPS = ['10.0.2.2']
 
 # Application definition
 
@@ -40,10 +41,13 @@ INSTALLED_APPS = [
 
     # third party
     'rest_framework',
+    'debug_toolbar',
 
     # project apps
-    # 将之前创建的accounts应用注册到了 Django 中。
+    # 将之前创建的accounts应用注册到了 Django 中
     'accounts',
+    'tweets',
+    'friendships',
 ]
 
 REST_FRAMEWORK = {
@@ -59,6 +63,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    # third party
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'twitter.urls'
