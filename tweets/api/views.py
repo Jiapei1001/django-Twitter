@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from tweets.api.serializers import TweetSerializer, TweetCreateSerializer
 from tweets.models import Tweet
+from newsfeeds.services import NewsFeedService
 
 
 class TweetViewSet(viewsets.GenericViewSet,
@@ -39,6 +40,10 @@ class TweetViewSet(viewsets.GenericViewSet,
         # 如何上面serializer里有instance，则对instance进行更新
         # 否则需要save()
         tweet = serializer.save()
+
+        # 当增加推文时，自动推送到newsfeed之中
+        NewsFeedService.fanout_to_followers(tweet)
+
         return Response(TweetSerializer(tweet).data, status=201)
 
     def list(self, request, *args, **kwargs):
