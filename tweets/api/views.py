@@ -13,6 +13,10 @@ class TweetViewSet(viewsets.GenericViewSet,
     API endpoint that allow users to create, list tweet
     """
     queryset = Tweet.objects.all()
+    # 这个serializer_class只是为了在backend debug的UI界面里，POST时显示的表单是什么
+    # 如果是serializer_class = TweetSerializer，那么需要多输入username
+    # TweetCreateSerializer只是需要输入content
+    # 完全只是UI界面
     serializer_class = TweetCreateSerializer
 
     def get_permissions(self):

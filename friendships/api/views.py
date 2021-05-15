@@ -75,7 +75,7 @@ class FriendshipViewSet(viewsets.GenericViewSet):
 
         # ??? 为什么这里不是from_user_id，和to_user_id???
         deleted, _ = Friendship.objects.filter(
-            from_user=request.user.id,
+            from_user=request.user,
             to_user=pk,
         ).delete()
 
