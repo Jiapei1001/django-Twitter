@@ -15,6 +15,8 @@ class CommentViewSet(viewsets.GenericViewSet):
     # 需要实现list，create，update，destroy这些功能
     serializer_class = CommentSerializerForCreate
     queryset = Comment.objects.all()
+    # after install django-filter
+    filterset_fields = ('tweet_id',)
 
     # NOTE：这里的get_permissions是针对Django的default methods
     # 如list，retrieve，create，update，destroy
@@ -68,4 +70,20 @@ class CommentViewSet(viewsets.GenericViewSet):
         comment.delete()
         return Response({
             'success': True,
+        }, status=status.HTTP_200_OK)
+
+    def list(self, request, *args, **kwargs):
+        if 'tweet_id' not in request.query_params:
+            return Response({
+                'message': 'missing tweet_id in request',
+                'success': False,
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        queryset = self.get_queryset()
+        comments = self.filter_queryset(queryset).order_by('created_at')
+
+        serializer = CommentSerializer(comments, many=True)
+
+        return Response({
+            'comments': serializer.data,
         }, status=status.HTTP_200_OK)
