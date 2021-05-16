@@ -1,6 +1,8 @@
 from rest_framework.test import APIClient
 from testing.testcases import TestCase
 from tweets.models import Tweet
+from datetime import timedelta
+from utils.time_helpers import utc_now
 
 # NOTE: must add '/', or will trigger redirect 301
 TWEET_LIST_API = '/api/tweets/'
@@ -26,6 +28,9 @@ class TweetApiTests(TestCase):
             self.create_tweet(self.user2)
             for _ in range(2)
         ]
+
+        self.jiapei = self.create_user('jiapei')
+        self.tweet = self.create_tweet(self.jiapei)
 
     def test_list_api(self):
         # must request with user_id
@@ -86,3 +91,19 @@ class TweetApiTests(TestCase):
         self.create_comment(self.user1, tweet, 'hmmmmmm....hello!')
         response = self.anonymous_client.get(url)
         self.assertEqual(len(response.data['comments']), 2)
+
+    def test_hours_to_now(self):
+        self.tweet.created_at = utc_now() - timedelta(hours=10)
+        self.tweet.save()
+        self.assertEqual(self.tweet.hours_to_now, 10)
+
+    def test_like_set(self):
+        self.create_like(self.jiapei, self.tweet)
+        self.assertEqual(self.tweet.like_set.count(), 1)
+
+        self.create_like(self.jiapei, self.tweet)
+        self.assertEqual(self.tweet.like_set.count(), 1)
+
+        jason = self.create_user('jason')
+        self.create_like(jason, self.tweet)
+        self.assertEqual(self.tweet.like_set.count(), 2)

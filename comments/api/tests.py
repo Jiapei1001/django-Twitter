@@ -18,6 +18,7 @@ class CommentApiTests(TestCase):
         self.jason_client.force_authenticate(self.jason)
 
         self.tweet = self.create_tweet(self.jiapei)
+        # self.comment = self.create_comment(self.jiapei, self.tweet)
 
     def test_create(self):
         # anonymous user cannot create comment
@@ -123,3 +124,13 @@ class CommentApiTests(TestCase):
             'user_id': self.jiapei.id,
         })
         self.assertEqual(len(response.data['comments']), 2)
+
+    def test_like_set(self):
+        self.create_like(self.jiapei, self.tweet)
+        self.assertEqual(self.tweet.like_set.count(), 1)
+
+        self.create_like(self.jiapei, self.tweet)
+        self.assertEqual(self.tweet.like_set.count(), 1)
+
+        self.create_like(self.jason, self.tweet)
+        self.assertEqual(self.tweet.like_set.count(), 2)
