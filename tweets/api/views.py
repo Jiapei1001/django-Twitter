@@ -1,9 +1,15 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from tweets.api.serializers import TweetSerializer, TweetCreateSerializer
+from tweets.api.serializers import (
+    TweetSerializer,
+    TweetCreateSerializer,
+    TweetSerializerWithComments,
+)
 from tweets.models import Tweet
 from newsfeeds.services import NewsFeedService
+from twitter.decorators import required_params
 
 
 class TweetViewSet(viewsets.GenericViewSet,
@@ -20,7 +26,7 @@ class TweetViewSet(viewsets.GenericViewSet,
     serializer_class = TweetCreateSerializer
 
     def get_permissions(self):
-        if self.action == 'list':
+        if self.action in ['list', 'retrieve']:
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -50,12 +56,16 @@ class TweetViewSet(viewsets.GenericViewSet,
 
         return Response(TweetSerializer(tweet).data, status=201)
 
+    @required_params(params=['user_id'])
     def list(self, request, *args, **kwargs):
         """
         reload list method, don't list all tweets, must use the user_id as the filter condition
         """
+        """
+        replaced by decorator
         if 'user_id' not in request.query_params:
             return Response('missing user_id', status=400)
+        """
 
         tweets = Tweet.objects.filter(
             user_id=request.query_params['user_id']
@@ -67,3 +77,8 @@ class TweetViewSet(viewsets.GenericViewSet,
         return Response({
             'tweets': serializer.data,
         })
+
+    # get a tweet with all its comments
+    def retrieve(self, request, *args, **kwargs):
+        tweet = self.get_object()
+        return Response(TweetSerializerWithComments(tweet).data, status=status.HTTP_200_OK)
