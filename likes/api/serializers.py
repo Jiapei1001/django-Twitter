@@ -15,7 +15,7 @@ class LikeSerializer(serializers.ModelSerializer):
         fields = ('user', 'created_at')
 
 
-class LikeSerializerForCreate(serializers.ModelSerializer):
+class BaseLikeSerializerForCreateAndCancel(serializers.ModelSerializer):
     content_type = serializers.ChoiceField(choices=['tweet', 'comment'])
     object_id = serializers.IntegerField()
 
@@ -43,6 +43,8 @@ class LikeSerializerForCreate(serializers.ModelSerializer):
             })
         return data
 
+
+class LikeSerializerForCreate(BaseLikeSerializerForCreateAndCancel):
     def create(self, validated_data):
         model_class = self._get_model_class(validated_data)
         instance, _ = Like.objects.get_or_create(
@@ -52,3 +54,15 @@ class LikeSerializerForCreate(serializers.ModelSerializer):
             object_id=validated_data['object_id'],
         )
         return instance
+
+
+class LikeSerializerForCancel(BaseLikeSerializerForCreateAndCancel):
+    # cancel is a self-defined method, it is not like create -> serializer.save()
+    # must use serializer.cancel()
+    def cancel(self):
+        model_class = self._get_model_class(self.validated_data)
+        Like.objects.filter(
+            user=self.context['request'].user,
+            content_type=ContentType.objects.get_for_model(model_class),
+            object_id=self.validated_data['object_id'],
+        ).delete()
