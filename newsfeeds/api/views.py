@@ -15,7 +15,14 @@ class NewsFeedViewSet(viewsets.GenericViewSet):
         return NewsFeed.objects.filter(user=self.request.user)
 
     def list(self, request):
-        serializer = NewsFeedSerializer(self.get_queryset(), many=True)
+        # Update below to include context, to get likes count and comments count
+        # serializer = NewsFeedSerializer(self.get_queryset(), many=True)
+        serializer = NewsFeedSerializer(
+            self.get_queryset(),
+            context={'request': request},
+            many=True,
+        )
+
         return Response({
             'newsfeeds': serializer.data,
         }, status=200)

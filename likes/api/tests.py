@@ -1,8 +1,12 @@
 from testing.testcases import TestCase
-
+from rest_framework.test import APIClient
 
 LIKE_BASE_URL = '/api/likes/'
 LIKE_CANCEL_URL = '/api/likes/cancel/'
+COMMENT_LIST_API = '/api/comments/'
+TWEET_LIST_API = '/api/tweets/'
+TWEET_DETAIL_API = '/api/tweets/{}/'
+NEWSFEED_LIST_API = '/api/newsfeeds/'
 
 
 class likeApiTests(TestCase):
@@ -138,3 +142,76 @@ class likeApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(tweet.like_set.count(), 0)
         self.assertEqual(comment.like_set.count(), 0)
+
+    def test_likes_in_comments_api(self):
+        tweet = self.create_tweet(self.jiapei)
+        comment = self.create_comment(self.jason, tweet)
+
+        # test anonymous
+        response = self.anonymous_client.get(COMMENT_LIST_API, {'tweet_id': tweet.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['comments'][0]['has_liked'], False)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 0)
+
+        # test comments list api
+        response = self.jason_client.get(COMMENT_LIST_API, {'tweet_id': tweet.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['comments'][0]['has_liked'], False)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 0)
+        # after jiapei liked this comment
+        self.create_like(self.jiapei, comment)
+        response = self.jiapei_client.get(COMMENT_LIST_API, {'tweet_id': tweet.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['comments'][0]['has_liked'], True)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 1)
+
+        # test tweet detail api
+        # jason liked his own comment
+        self.create_like(self.jason, comment)
+        url = TWEET_DETAIL_API.format(tweet.id)
+        response = self.jason_client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['comments'][0]['has_liked'], True)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 2)
+
+    def test_likes_in_tweets_api(self):
+        tweet = self.create_tweet(self.jiapei)
+
+        # test tweet detail api
+        url = TWEET_DETAIL_API.format(tweet.id)
+        response = self.jason_client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['has_liked'], False)
+        self.assertEqual(response.data['likes_count'], 0)
+        # jason liked the tweet
+        self.create_like(self.jason, tweet)
+        response = self.jason_client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['has_liked'], True)
+        self.assertEqual(response.data['likes_count'], 1)
+
+        # test tweets list api
+        # get jiapei's tweet list
+        response = self.jason_client.get(TWEET_LIST_API, {'user_id': self.jiapei.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['tweets'][0]['has_liked'], True)
+        self.assertEqual(response.data['tweets'][0]['likes_count'], 1)
+
+        # test newsfeeds list api
+        # jiapei liked his own tweet
+        # jason created a newsfeed
+        self.create_like(self.jiapei, tweet)
+        self.create_newsfeed(self.jason, tweet)
+        response = self.jason_client.get(NEWSFEED_LIST_API)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['newsfeeds'][0]['tweet']['has_liked'], True)
+        self.assertEqual(response.data['newsfeeds'][0]['tweet']['likes_count'], 2)
+
+        # test likes details
+        url = TWEET_DETAIL_API.format(tweet.id)
+        response = self.jason_client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['likes']), 2)
+        # ordered by created_at reversely
+        self.assertEqual(response.data['likes'][0]['user']['id'], self.jiapei.id)
+        self.assertEqual(response.data['likes'][1]['user']['id'], self.jason.id)

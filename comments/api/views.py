@@ -44,8 +44,14 @@ class CommentViewSet(viewsets.GenericViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         comment = serializer.save()
+        # update below, as CommentSerializer added fields of likes_count and has_liked
+        # both of them need the context of the request
+        # return Response(
+        #     CommentSerializer(comment).data,
+        #     status=status.HTTP_201_CREATED,
+        # )
         return Response(
-            CommentSerializer(comment).data,
+            CommentSerializer(comment, context={'request': request}).data,
             status=status.HTTP_201_CREATED,
         )
 
@@ -61,8 +67,14 @@ class CommentViewSet(viewsets.GenericViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         comment = serializer.save()
+        # update below, as CommentSerializer added fields of likes_count and has_liked
+        # both of them need the context of the request
+        # return Response(
+        #     CommentSerializer(comment).data,
+        #     status=status.HTTP_200_OK,
+        # )
         return Response(
-            CommentSerializer(comment).data,
+            CommentSerializer(comment, context={'request': self.request}).data,
             status=status.HTTP_200_OK,
         )
 
@@ -87,7 +99,14 @@ class CommentViewSet(viewsets.GenericViewSet):
         queryset = self.get_queryset()
         comments = self.filter_queryset(queryset).order_by('created_at')
 
-        serializer = CommentSerializer(comments, many=True)
+        # update below, as CommentSerializer added fields of likes_count and has_liked
+        # both of them need the context of the request
+        # serializer = CommentSerializer(comments, many=True)
+        serializer = CommentSerializer(
+            comments,
+            context={'request': self.request},
+            many=True,
+        )
 
         return Response({
             'comments': serializer.data,

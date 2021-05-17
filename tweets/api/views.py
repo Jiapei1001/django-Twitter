@@ -4,7 +4,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from tweets.api.serializers import (
     TweetSerializer,
-    TweetCreateSerializer,
+    TweetSerializerForCreate,
+    TweetSerializerForDetail,
     TweetSerializerWithComments,
 )
 from tweets.models import Tweet
@@ -23,7 +24,7 @@ class TweetViewSet(viewsets.GenericViewSet,
     # 如果是serializer_class = TweetSerializer，那么需要多输入username
     # TweetCreateSerializer只是需要输入content
     # 完全只是UI界面
-    serializer_class = TweetCreateSerializer
+    serializer_class = TweetSerializerForCreate
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -34,7 +35,7 @@ class TweetViewSet(viewsets.GenericViewSet,
         """
         reload create method, because current login user as the tweet.user
         """
-        serializer = TweetCreateSerializer(
+        serializer = TweetSerializerForCreate(
             data=request.data,
             # 传递额外变量，request user把request整体进行传递
             context={'request': request},
@@ -54,7 +55,10 @@ class TweetViewSet(viewsets.GenericViewSet,
         # 当增加推文时，自动推送到newsfeed之中
         NewsFeedService.fanout_to_followers(tweet)
 
-        return Response(TweetSerializer(tweet).data, status=201)
+        # Update below to include context, to get likes count and comments count
+        # return Response(TweetSerializer(tweet).data, status=201)
+        serializer = TweetSerializer(tweet, context={'request': request})
+        return Response(serializer.data, status=201)
 
     @required_params(params=['user_id'])
     def list(self, request, *args, **kwargs):
@@ -71,7 +75,14 @@ class TweetViewSet(viewsets.GenericViewSet,
             user_id=request.query_params['user_id']
         ).order_by('-created_at')
 
-        serializer = TweetSerializer(tweets, many=True)
+        # Update below to include context, to get likes count and comments count
+        # serializer = TweetSerializer(tweets, many=True)
+        serializer = TweetSerializer(
+            tweets,
+            context={'request': request},
+            many=True,
+        )
+
         # 一般来说JSON格式的response，默认需要用hash的格式
         # 而不用list的格式（约定俗成）
         return Response({
@@ -81,4 +92,10 @@ class TweetViewSet(viewsets.GenericViewSet,
     # get a tweet with all its comments
     def retrieve(self, request, *args, **kwargs):
         tweet = self.get_object()
-        return Response(TweetSerializerWithComments(tweet).data, status=status.HTTP_200_OK)
+        # Update below to include context, to get likes count and comments count
+        # return Response(TweetSerializerWithComments(tweet).data, status=status.HTTP_200_OK)
+        serializer = TweetSerializerForDetail(
+            self.get_object(),
+            context={'request': request},
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
