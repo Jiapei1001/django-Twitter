@@ -8,7 +8,7 @@ class NotificationService(object):
 
     @classmethod
     def send_like_notification(cls, like):
-        target = like.content_type
+        target = like.content_object
         if like.user == target.user:
             return
         if like.content_type == ContentType.objects.get_for_model(Tweet):

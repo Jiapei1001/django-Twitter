@@ -1,5 +1,6 @@
 from rest_framework.test import APIClient
 from testing.testcases import TestCase
+from accounts.models import UserProfile
 
 
 LOGIN_URL = '/api/accounts/login/'
@@ -46,6 +47,11 @@ class AccountApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(response.data['user'], None)
         self.assertEqual(response.data['user']['email'], 'admin@gmail.com')
+
+        # check user profile has been created, but is None
+        created_user_id = response.data['user']['id']
+        profile = UserProfile.objects.filter(user_id=created_user_id).first()
+        self.assertEqual(profile, None)
 
         # login status as True
         response = self.client.get(LOGIN_STATUS_URL)

@@ -62,7 +62,7 @@ class LikeSerializerForCreate(BaseLikeSerializerForCreateAndCancel):
         return Like.objects.get_or_create(
             content_type=ContentType.objects.get_for_model(model_class),
             object_id=self.validated_data['object_id'],
-            user_id=self.context['request'].user,
+            user=self.context['request'].user,
         )
 
 
