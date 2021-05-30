@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from comments.api.permissions import IsObjectOwner
 from comments.models import Comment
+from inbox.services import NotificationService
 from comments.api.serializers import (
     CommentSerializer,
     CommentSerializerForCreate,
@@ -44,6 +45,7 @@ class CommentViewSet(viewsets.GenericViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         comment = serializer.save()
+        NotificationService.send_comment_notification(comment)
         # update below, as CommentSerializer added fields of likes_count and has_liked
         # both of them need the context of the request
         # return Response(

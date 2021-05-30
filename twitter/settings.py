@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'debug_toolbar',
     'django_filters',
+    'notifications',
 
     # project apps
     # 将之前创建的accounts应用注册到了 Django 中
