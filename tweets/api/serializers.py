@@ -1,9 +1,12 @@
-from rest_framework import serializers, exceptions
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from accounts.api.serializers import UserSerializer, UserSerializerForTweet
 from tweets.models import Tweet
 from comments.api.serializers import CommentSerializer
 from likes.api.serializers import LikeSerializer
 from likes.services import LikeService
+from tweets.services import TweetService
+from tweets.constants import TWEET_PHOTO_UPLOAD_LIMIT
 
 
 class TweetSerializer(serializers.ModelSerializer):
@@ -12,10 +15,12 @@ class TweetSerializer(serializers.ModelSerializer):
     comments_count = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
     has_liked = serializers.SerializerMethodField()
+    # after adding TweetPhoto
+    photo_urls = serializers.SerializerMethodField()
 
     class Meta:
         model = Tweet
-        fields = ('id', 'user', 'created_at', 'content', 'comments_count', 'likes_count', 'has_liked',)
+        fields = ('id', 'user', 'created_at', 'content', 'comments_count', 'likes_count', 'has_liked', 'photo_urls',)
 
     def get_likes_count(self, obj):
         return obj.like_set.count()
@@ -26,20 +31,49 @@ class TweetSerializer(serializers.ModelSerializer):
     def get_has_liked(self, obj):
         return LikeService.has_liked(self.context['request'].user, obj)
 
+    def get_photo_urls(self, obj):
+        photo_urls = []
+        for photo in obj.tweetphoto_set.all().order_by('order'):
+            photo_urls.append(photo.file.url)
+        return photo_urls
+
 
 class TweetSerializerForCreate(serializers.ModelSerializer):
     content = serializers.CharField(min_length=6, max_length=140)
+    # after adding TweetPhoto
+    files = serializers.ListField(
+        child=serializers.FileField(),
+        allow_empty=True,
+        required=False,
+    )
 
     class Meta:
         model = Tweet
-        fields = ('content',)
+        # fields = ('content',)
+        fields = ('content', 'files',)
+
+    def validate(self, data):
+        if len(data.get('files', [])) > TWEET_PHOTO_UPLOAD_LIMIT:
+            raise ValidationError({
+                'message': f'You can only upload {TWEET_PHOTO_UPLOAD_LIMIT} photos at most.'
+            })
+        return data
 
     def create(self, validated_data):
         # 当前登录用户
         user = self.context['request'].user
         content = validated_data['content']
         tweet = Tweet.objects.create(user=user, content=content)
+
+        # after adding TweetPhoto
+        if validated_data.get('files'):
+            TweetService.create_photos_from_file(
+                tweet,
+                validated_data['files'],
+            )
+
         return tweet
+
 
 # extend TweetSerializer
 class TweetSerializerForDetail(TweetSerializer):
