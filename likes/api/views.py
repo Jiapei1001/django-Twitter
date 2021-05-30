@@ -2,13 +2,14 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
-from twitter.decorators import required_params
 from likes.models import Like
 from likes.api.serializers import (
     LikeSerializer,
     LikeSerializerForCreate,
     LikeSerializerForCancel,
 )
+from inbox.services import NotificationService
+from utils.decorators import required_params
 
 
 class LikeViewSet(viewsets.GenericViewSet):
@@ -16,7 +17,7 @@ class LikeViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = LikeSerializerForCreate
 
-    @required_params(request_attr='data', params=['content_type', 'object_id'])
+    @required_params(method='POST', params=['content_type', 'object_id'])
     def create(self, request, *args, **kwargs):
         serializer = LikeSerializerForCreate(
             data=request.data,
@@ -28,7 +29,12 @@ class LikeViewSet(viewsets.GenericViewSet):
                 'errors': serializer.errors,
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        instance = serializer.save()
+        # instance = serializer.save()
+        # update LikeSerializer's create() method to get_or_create() method
+        instance, created = serializer.get_or_create()
+        if created:
+            NotificationService.send_like_notification(instance)
+        
         return Response(
             # NOTE: when use serializer to operate data,
             # here don't need to wrap the serializer.data with {}
@@ -39,7 +45,7 @@ class LikeViewSet(viewsets.GenericViewSet):
         )
 
     @action(methods=['POST'], detail=False)
-    @required_params(request_attr='data', params=['content_type', 'object_id'])
+    @required_params(method='POST', params=['content_type', 'object_id'])
     def cancel(self, request, *args, **kwargs):
         serializer = LikeSerializerForCancel(
             data=request.data,

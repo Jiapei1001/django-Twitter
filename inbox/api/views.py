@@ -7,6 +7,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from utils.decorators import required_params
 
 
 class NotificationViewSet(
@@ -34,7 +35,7 @@ class NotificationViewSet(
             'marked_count': updated_count,
         }, status=status.HTTP_200_OK)
 
-    @action(methods=['POST'], params=['unread'])
+    @required_params(method='POST', params=['unread'])
     def update(self, request, *args, **kwargs):
         """
         用户可以标记一个 notification 为已读或者未读。标记已读和未读都是对 notification

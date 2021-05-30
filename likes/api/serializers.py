@@ -56,6 +56,7 @@ class LikeSerializerForCreate(BaseLikeSerializerForCreateAndCancel):
     #     return instance
 
     # after adding Notifications:
+    # See LikeViewSet, check if it is created, and avoid duplication.
     def get_or_create(self):
         model_class = self._get_model_class(self.validated_data)
         return Like.objects.get_or_create(
