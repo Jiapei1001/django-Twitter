@@ -9,6 +9,7 @@ __pycache__/
 # bionic64.box
 *.box
 Vagrantfile
+media/
 
 # ./vagrant
 .vagrant

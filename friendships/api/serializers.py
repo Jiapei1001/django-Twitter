@@ -1,12 +1,13 @@
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
-from accounts.api.serializers import UserSerializer
+from accounts.api.serializers import UserSerializer, UserSerializerForFriendship
 from friendships.models import Friendship
 
 
 class FollowerSerializer(serializers.ModelSerializer):
     # define user, as to avoid it just show user as an integer
-    user = UserSerializer(source='from_user')
+    # user = UserSerializer(source='from_user')
+    user = UserSerializerForFriendship(source='from_user')
     created_at = serializers.DateTimeField()
 
     class Meta:
@@ -16,7 +17,8 @@ class FollowerSerializer(serializers.ModelSerializer):
 
 class FollowingSerializer(serializers.ModelSerializer):
     # define user, as to avoid it just show user as an integer
-    user = UserSerializer(source='to_user')
+    # user = UserSerializer(source='to_user')
+    user = UserSerializerForFriendship(source='to_user')
     created_at = serializers.DateTimeField()
 
     class Meta:
